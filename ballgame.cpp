@@ -63,16 +63,18 @@ class Player{
         void player();
         void drawRoundRect(float x, float y, float width, float height, float radius, int angle);
         void drawCrescent(float x, float y, float radius, float thickness, int num_segments);
+        void drawCircle(float x, float y, float radius, int num_segments);
 };
 
-void Player::drawRoundRect(float x, float y, float width, float height, float radius, int angle){
+void Player::drawRoundRect(float x, float y, float width, float height, float radius, int angle) {
+    // 半径が高さの半分を超えないように調整
+    radius = std::min(radius, height / 2);
+    radius = std::min(radius, width / 2);
+    
     int num_segments = 100; // 円弧の分割数
     float theta = 2 * PI / float(num_segments);
     float tangetial_factor = tanf(theta);
     float radial_factor = cosf(theta);
-
-    float cx = radius; // 初期のx座標
-    float cy = 0; // 初期のy座標
 
     // 変換行列を保存
     glPushMatrix();
@@ -90,7 +92,7 @@ void Player::drawRoundRect(float x, float y, float width, float height, float ra
     glVertex2f(x + radius, y + height);
     glEnd();
 
-    // 四角形の上下の長方形部分を描画
+    // 四角形の左右の長方形部分を描画
     glBegin(GL_QUADS);
     glVertex2f(x, y + radius);
     glVertex2f(x + radius, y + radius);
@@ -103,62 +105,54 @@ void Player::drawRoundRect(float x, float y, float width, float height, float ra
     glVertex2f(x + width - radius, y + height - radius);
     glEnd();
 
-    // 四角形の角の円弧を描画
+    // 右上の円弧
     glBegin(GL_TRIANGLE_FAN);
-    for (int i = 0; i < num_segments; i++) {
+    glVertex2f(x + width - radius, y + height - radius); // 円の中心
+    for (int i = 0; i <= num_segments / 4; i++) {
+        float cx = radius * cosf(theta * i);
+        float cy = radius * sinf(theta * i);
         glVertex2f(x + width - radius + cx, y + height - radius + cy);
-        float tx = -cy;
-        float ty = cx;
-        cx += tx * tangetial_factor;
-        cy += ty * tangetial_factor;
-        cx *= radial_factor;
-        cy *= radial_factor;
     }
     glEnd();
 
+    // 左上の円弧
     glBegin(GL_TRIANGLE_FAN);
-    for (int i = 0; i < num_segments; i++) {
+    glVertex2f(x + radius, y + height - radius); // 円の中心
+    for (int i = num_segments / 4; i <= num_segments / 2; i++) {
+        float cx = radius * cosf(theta * i);
+        float cy = radius * sinf(theta * i);
         glVertex2f(x + radius + cx, y + height - radius + cy);
-        float tx = -cy;
-        float ty = cx;
-        cx += tx * tangetial_factor;
-        cy += ty * tangetial_factor;
-        cx *= radial_factor;
-        cy *= radial_factor;
     }
     glEnd();
 
+    // 左下の円弧
     glBegin(GL_TRIANGLE_FAN);
-    for (int i = 0; i < num_segments; i++) {
+    glVertex2f(x + radius, y + radius); // 円の中心
+    for (int i = num_segments / 2; i <= 3 * num_segments / 4; i++) {
+        float cx = radius * cosf(theta * i);
+        float cy = radius * sinf(theta * i);
         glVertex2f(x + radius + cx, y + radius + cy);
-        float tx = -cy;
-        float ty = cx;
-        cx += tx * tangetial_factor;
-        cy += ty * tangetial_factor;
-        cx *= radial_factor;
-        cy *= radial_factor;
     }
     glEnd();
 
+    // 右下の円弧
     glBegin(GL_TRIANGLE_FAN);
-    for (int i = 0; i < num_segments; i++) {
+    glVertex2f(x + width - radius, y + radius); // 円の中心
+    for (int i = 3 * num_segments / 4; i <= num_segments; i++) {
+        float cx = radius * cosf(theta * i);
+        float cy = radius * sinf(theta * i);
         glVertex2f(x + width - radius + cx, y + radius + cy);
-        float tx = -cy;
-        float ty = cx;
-        cx += tx * tangetial_factor;
-        cy += ty * tangetial_factor;
-        cx *= radial_factor;
-        cy *= radial_factor;
     }
     glEnd();
 
     // 変換行列を元に戻す
     glPopMatrix();
 }
+
 void Player::drawCrescent(float x, float y, float radius, float thickness, int num_segments) {
     float angle_step = 2.0f * M_PI / num_segments;
 
-    // Draw outer circle
+    // 手の形にするために黒色で円を描く
     glBegin(GL_TRIANGLE_FAN);
     glVertex2f(x, y);
     for (int i = 0; i <= num_segments; i++) {
@@ -167,13 +161,25 @@ void Player::drawCrescent(float x, float y, float radius, float thickness, int n
     }
     glEnd();
 
-    // Draw inner circle to create crescent shape
-    glColor3f(1.0, 1.0, 1.0); // Set color to white to "erase" part of the circle
+    // 手の形にするために黒色を白色で塗りつぶす
+    glColor3f(1.0, 1.0, 1.0); // 白色を設定
     glBegin(GL_TRIANGLE_FAN);
-    glVertex2f(x, y + thickness); // Move the inner circle up
+    glVertex2f(x, y + thickness); // 円弧の中心
+    float large_radius = radius + 0.5f;
     for (int i = 0; i <= num_segments; i++) {
         float angle = i * angle_step;
-        glVertex2f(x + cos(angle) * (radius - thickness), y + thickness + sin(angle) * (radius - thickness));
+        glVertex2f(x + cos(angle) * large_radius, y + thickness + sin(angle) * large_radius);
+    }
+    glEnd();
+}
+
+void Player::drawCircle(float x, float y, float radius, int num_segments) {
+    float angle_step = 2.0f * M_PI / num_segments;
+    glBegin(GL_TRIANGLE_FAN);
+    glVertex2f(x, y);
+    for (int i = 0; i <= num_segments; i++) {
+        float angle = i * angle_step;
+        glVertex2f(x + cos(angle) * radius, y + sin(angle) * radius);
     }
     glEnd();
 }
@@ -181,16 +187,19 @@ void Player::drawCrescent(float x, float y, float radius, float thickness, int n
 void Player::player(){
     // RightArm
     glColor3f(0.0, 0.0, 0.0);
-    drawRoundRect(x, y, 70, 20, 10, 45);
+    drawRoundRect(x, y, 45, 10, 10, 45);
     // LeftArm
     glColor3f(0.0, 0.0, 0.0);
-    drawRoundRect(x - 200, y, 70, 20, 10, -45);
+    drawRoundRect(x - 165, y, 45, 10, 10, -45);
     // RightHand
     glColor3f(0.0, 0.0, 0.0);
-    drawCrescent(x + 70, y, 20, 15, 100);
+    drawCrescent(x + 45, y + 30, 15, 10, 100);
     // LeftHand
     glColor3f(0.0, 0.0, 0.0);
-    drawCrescent(x - 200, y, 20, 15, 100);
+    drawCrescent(x - 165, y + 30, 15, 10, 100);
+    // Body
+    glColor3f(0.0, 0.0, 0.0);
+    drawCircle(300, 30, 25, 50);
 }
 
 Ball ball;
@@ -198,9 +207,9 @@ Player player;
 
 void display(){
     glClear(GL_COLOR_BUFFER_BIT);
+    player.player();
     ball.move();
     ball.ball();
-    player.player();
     glutSwapBuffers();
 }
 

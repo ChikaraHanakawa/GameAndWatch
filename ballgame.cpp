@@ -59,11 +59,12 @@ void Ball::move(){
 
 class Player{
     public:
-        int x=360, y=60;
         void player();
         void drawRoundRect(float x, float y, float width, float height, float radius, int angle);
         void drawCrescent(float x, float y, float radius, float thickness, int num_segments);
         void drawCircle(float x, float y, float radius, int num_segments);
+        void drawEllipse(float x, float y, float radiusX, float radiusY, int num_segments);
+        void drawFaceParts(float x, float y, float radiusX, float radiusY, int num_segments);
 };
 
 void Player::drawRoundRect(float x, float y, float width, float height, float radius, int angle) {
@@ -184,22 +185,53 @@ void Player::drawCircle(float x, float y, float radius, int num_segments) {
     glEnd();
 }
 
+void Player::drawEllipse(float x, float y, float radiusX, float radiusY, int num_segments) {
+    float angle_step = 2.0f * M_PI / num_segments;
+    glBegin(GL_TRIANGLE_FAN);
+    glVertex2f(x, y);
+    for (int i = 0; i <= num_segments; i++) {
+        float angle = i * angle_step;
+        glVertex2f(x + cos(angle) * radiusX, y + sin(angle) * radiusY);
+    }
+    glEnd();
+}
+
+void Player::drawFaceParts(float x, float y, float radiusX, float radiusY, int num_segments) {
+    // RightEye
+    glColor3f(1.0, 1.0, 1.0);
+    drawCircle(x + 5, y + 5, 2, 100);
+    // LeftEye
+    glColor3f(1.0, 1.0, 1.0);
+    drawCircle(x - 5, y + 5, 2, 100);
+    // Nose
+    glColor3f(0.0, 0.0, 0.0);
+    drawRoundRect(x, y + 20, 2, 5, 1, 0);
+}
+
 void Player::player(){
     // RightArm
     glColor3f(0.0, 0.0, 0.0);
-    drawRoundRect(x, y, 45, 10, 10, 45);
+    drawRoundRect(370, 80, 45, 10, 10, 45);
+    drawRoundRect(320, 60, 45, 10, 10, 0);
     // LeftArm
     glColor3f(0.0, 0.0, 0.0);
-    drawRoundRect(x - 165, y, 45, 10, 10, -45);
+    drawRoundRect(185, 80, 45, 10, 10, -45);
+    drawRoundRect(235, 60, 45, 10, 10, 0);
     // RightHand
     glColor3f(0.0, 0.0, 0.0);
-    drawCrescent(x + 45, y + 30, 15, 10, 100);
+    drawCrescent(415, 110, 15, 10, 100);
     // LeftHand
     glColor3f(0.0, 0.0, 0.0);
-    drawCrescent(x - 165, y + 30, 15, 10, 100);
+    drawCrescent(185, 110, 15, 10, 100);
     // Body
     glColor3f(0.0, 0.0, 0.0);
-    drawCircle(300, 30, 25, 50);
+    drawCircle(300, 50, 20, 50);
+    // Head
+    glColor3f(0.0, 0.0, 0.0);
+    drawEllipse(300, 100, 30, 18, 50);
+    drawFaceParts(300, 100, 30, 18, 50);
+    // RightLeg
+    // LeftLeg
 }
 
 Ball ball;

@@ -65,6 +65,7 @@ class Player{
         void drawCircle(float x, float y, float radius, int num_segments);
         void drawEllipse(float x, float y, float radiusX, float radiusY, int num_segments);
         void drawFaceParts(float x, float y, float radiusX, float radiusY, int num_segments);
+        void drawRect(float x, float y, float width, float height);
 };
 
 void Player::drawRoundRect(float x, float y, float width, float height, float radius, int angle) {
@@ -196,16 +197,28 @@ void Player::drawEllipse(float x, float y, float radiusX, float radiusY, int num
     glEnd();
 }
 
+void Player::drawRect(float x, float y, float width, float height) {
+    glBegin(GL_QUADS);
+    glVertex2f(x, y);
+    glVertex2f(x + width, y);
+    glVertex2f(x + width, y + height);
+    glVertex2f(x, y + height);
+    glEnd();
+}
+
 void Player::drawFaceParts(float x, float y, float radiusX, float radiusY, int num_segments) {
     // RightEye
     glColor3f(1.0, 1.0, 1.0);
-    drawCircle(x + 5, y + 5, 2, 100);
+    drawCircle(x + 15, y + 10, 5, 100);
     // LeftEye
     glColor3f(1.0, 1.0, 1.0);
-    drawCircle(x - 5, y + 5, 2, 100);
+    drawCircle(x - 15, y + 10, 5, 100);
     // Nose
     glColor3f(0.0, 0.0, 0.0);
-    drawRoundRect(x, y + 20, 2, 5, 1, 0);
+    drawEllipse(x, y + 20, 10, 20, 100);
+    // Neck
+    glColor3f(0.0, 0.0, 0.0);
+    drawRect(x - 5, y - 40, 10, 30);
 }
 
 void Player::player(){

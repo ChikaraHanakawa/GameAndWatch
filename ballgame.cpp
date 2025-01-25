@@ -256,20 +256,40 @@ void Player::drawIsoscelesTriangle(float x, float y, float base, float height) {
 
     // 2等辺三角形を描画
     glBegin(GL_TRIANGLES);
-    glColor3f(0.0, 0.0, 0.0); // 黒色
+    glColor3f(0.0, 0.0, 0.0);
     glVertex2f(x - halfBase, y);
     glVertex2f(x + halfBase, y);
     glVertex2f(x + halfBase, y + height);
     glEnd();
 
     // 底角を黒丸で塗りつぶす
-    glColor3f(0.0, 0.0, 0.0); // 黒色
-    drawCircle(x - halfBase, y, 10, 100); // 半径10の黒丸
-    drawCircle(x + halfBase, y, 7, 100); // 半径10の黒丸
+    glColor3f(0.0, 0.0, 0.0);
+    drawCircle(x - halfBase, y, 10, 100);
+    drawCircle(x + halfBase, y, 7, 100);
 
     // 頂角を白丸で隠す
-    glColor3f(1.0, 1.0, 1.0); // 白色
-    drawCircle(x, y + height, 12, 100); // 半径10の白丸
+    glColor3f(1.0, 1.0, 1.0);
+    drawCircle(x, y + height, 12, 100);
+    drawRect(x - base, y - halfBase, 50, 10);
+
+    x += 70;
+
+    // 左右反転した2等辺三角形を描画
+    glBegin(GL_TRIANGLES);
+    glColor3f(0.0, 0.0, 0.0);
+    glVertex2f(x - halfBase, y);
+    glVertex2f(x + halfBase, y);
+    glVertex2f(x - halfBase, y + height);
+    glEnd();
+
+    // 底角を黒丸で塗りつぶす
+    glColor3f(0.0, 0.0, 0.0);
+    drawCircle(x - halfBase, y, 7, 100);
+    drawCircle(x + halfBase, y, 10, 100);
+
+    // 頂角を白丸で隠す
+    glColor3f(1.0, 1.0, 1.0);
+    drawCircle(x, y + height, 12, 100);
     drawRect(x - base, y - halfBase, 50, 10);
 }
 
@@ -295,13 +315,13 @@ void Player::player(){
     glColor3f(0.0, 0.0, 0.0);
     drawEllipse(300, 100, 30, 18, 50);
     drawFaceParts(300, 100, 30, 18, 50);
-    // RightLeg
+    // Foot
     glColor3f(0.0, 0.0, 0.0);
-    drawIsoscelesTriangle(20, 60, 20, 30);
-    drawCurvedLeg(270, 12, 30, 10, 45, 5);
-    // LeftLeg
+    drawIsoscelesTriangle(266, 2, 20, 30);
+    // Leg
     glColor3f(0.0, 0.0, 0.0);
     drawCurvedLeg(330, 12, 30, 10, -45, 5, 1);
+    drawCurvedLeg(270, 12, 30, 10, 45, 5);
 }
 
 Ball ball;

@@ -1,3 +1,4 @@
+#include <iostream>
 #include <GL/glut.h>
 #include <vector>
 #include <cmath>
@@ -6,15 +7,19 @@
 #define WIDTH 640
 #define HEIGHT 480
 
+struct coordinate{
+    int LhandX, LhandY, RhandX, RhandY;
+};
+
 class Ball {
-public:
     float x, y, vx, vy;
-    const float gravity = -0.1, restitution = 0.8;
+    const float gravity = -0.1, restitution = 0.9;
+public:
     std::vector<float> circleVertices;
-    Ball() : x(10.0), y(10.0), vx(3.0), vy(10.0) {}
+    Ball() : x(10.0), y(400.0), vx(3.0), vy(10.0) {}
     void setCircleVertices();
     void ball();
-    void move();
+    void move(int LhandX, int RhandX, int handY);
 };
 
 void Ball::setCircleVertices(){
@@ -40,25 +45,31 @@ void Ball::ball(){
     glEnd();
 }
 
-void Ball::move(){
-    vy += gravity;
-    x += vx;
-    y += vy;
+void Ball::move(int LhandX, int RhandX, int handY){
+    if(handY < y && y < handY + 10){
+        if(LhandX < x && x < LhandX + 45 || RhandX < x && x < RhandX + 45){
+            vy = -vy * restitution;
+        }
+    }
     if(x < 0 || x > WIDTH){
         vx = -vx;
-    }
-    if(y < 0){
-        y = 0;
-        vy = -vy * restitution;
     }
     if(y > HEIGHT){
         y = HEIGHT;
         vy = -vy;
     }
+    if(y < 0){
+        y = 0;
+        vy = -vy * restitution;
+    }
+    vy += gravity;
+    x += vx;
+    y += vy;
 }
 
 class Player{
     public:
+        int LhandX = 185, LhandY = 110, RhandX = 415, RhandY = 110;
         void player();
         void drawRoundRect(float x, float y, float width, float height, float radius, int angle);
         void drawCrescent(float x, float y, float radius, float thickness, int num_segments);
@@ -294,6 +305,7 @@ void Player::drawIsoscelesTriangle(float x, float y, float base, float height) {
 }
 
 void Player::player(){
+    coordinate p = {LhandX, LhandY, RhandX, RhandY};
     // RightArm
     glColor3f(0.0, 0.0, 0.0);
     drawRoundRect(370, 80, 45, 10, 10, 45);
@@ -304,10 +316,10 @@ void Player::player(){
     drawRoundRect(235, 60, 45, 10, 10, 0);
     // RightHand
     glColor3f(0.0, 0.0, 0.0);
-    drawCrescent(415, 110, 15, 10, 100);
+    drawCrescent(RhandX, RhandY, 15, 10, 100);
     // LeftHand
     glColor3f(0.0, 0.0, 0.0);
-    drawCrescent(185, 110, 15, 10, 100);
+    drawCrescent(LhandX, LhandY, 15, 10, 100);
     // Body
     glColor3f(0.0, 0.0, 0.0);
     drawCircle(300, 57, 20, 50);
@@ -330,7 +342,7 @@ Player player;
 void display(){
     glClear(GL_COLOR_BUFFER_BIT);
     player.player();
-    ball.move();
+    ball.move(player.LhandX, player.RhandX, player.LhandY);
     ball.ball();
     glutSwapBuffers();
 }

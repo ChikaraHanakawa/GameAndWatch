@@ -7,10 +7,6 @@
 #define WIDTH 640
 #define HEIGHT 480
 
-struct coordinate{
-    int LhandX, LhandY, RhandX, RhandY;
-};
-
 class Ball {
     float x, y, vx, vy;
     const float gravity = -0.1, restitution = 0.9;
@@ -69,8 +65,12 @@ void Ball::move(int LhandX, int RhandX, int handY){
 
 class Player{
     public:
+        float positionX = 300.0;
+        float moveSpeed = 5.0;
         int LhandX = 185, LhandY = 110, RhandX = 415, RhandY = 110;
         void player();
+        void move();
+        void updateHandPositions();
         void drawRoundRect(float x, float y, float width, float height, float radius, int angle);
         void drawCrescent(float x, float y, float radius, float thickness, int num_segments);
         void drawCircle(float x, float y, float radius, int num_segments);
@@ -223,9 +223,13 @@ void Player::drawFaceParts(float x, float y, float radiusX, float radiusY, int n
     // RightEye
     glColor3f(1.0, 1.0, 1.0);
     drawCircle(x + 15, y + 10, 5, 100);
+    glColor3f(0.0, 0.0, 0.0);
+    drawCircle(x + 15, y + 12, 3, 100);
     // LeftEye
     glColor3f(1.0, 1.0, 1.0);
     drawCircle(x - 15, y + 10, 5, 100);
+    glColor3f(0.0, 0.0, 0.0);
+    drawCircle(x - 15, y + 12, 3, 100);
     // Nose
     glColor3f(0.0, 0.0, 0.0);
     drawEllipse(x, y + 20, 10, 20, 100);
@@ -305,7 +309,8 @@ void Player::drawIsoscelesTriangle(float x, float y, float base, float height) {
 }
 
 void Player::player(){
-    coordinate p = {LhandX, LhandY, RhandX, RhandY};
+    glPushMatrix();
+    glTranslatef(positionX - 300, 0, 0); 
     // RightArm
     glColor3f(0.0, 0.0, 0.0);
     drawRoundRect(370, 80, 45, 10, 10, 45);
@@ -336,6 +341,15 @@ void Player::player(){
     drawCurvedLeg(270, 12, 30, 10, 45, 5);
 }
 
+void Player::updateHandPositions(){
+    LhandX = positionX - 115;
+    RhandX = positionX + 115;
+}
+
+void Player::move(){
+    updateHandPositions();
+}
+
 Ball ball;
 Player player;
 
@@ -350,6 +364,23 @@ void display(){
 void timer(int value){
     glutPostRedisplay();
     glutTimerFunc(16, timer, 0); // 約60FPSで更新
+}
+
+void specialKeyInput(int key, int x, int y) {
+    switch(key) {
+        case GLUT_KEY_LEFT:
+            if(player.positionX > 50) { // 左端の制限
+                player.positionX -= player.moveSpeed;
+            }
+            break;
+        case GLUT_KEY_RIGHT:
+            if(player.positionX < WIDTH - 50) { // 右端の制限
+                player.positionX += player.moveSpeed;
+            }
+            break;
+    }
+    player.move(); // 位置の更新を反映
+    glutPostRedisplay();
 }
 
 void initOpenGL(){
@@ -372,7 +403,7 @@ int main(int argc, char** argv){
 
     glutDisplayFunc(display);
     glutTimerFunc(0, timer, 0);
-
+    glutSpecialFunc(specialKeyInput); 
     glutMainLoop();
     return 0;
 }

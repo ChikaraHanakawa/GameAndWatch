@@ -12,10 +12,10 @@ class Ball {
     const float gravity = -0.1, restitution = 0.9;
 public:
     std::vector<float> circleVertices;
-    Ball() : x(10.0), y(400.0), vx(3.0), vy(10.0) {}
+    Ball() : x(10.0), y(400.0), vx(3.0), vy(5.0) {}
     void setCircleVertices();
     void ball();
-    void move(int LhandX, int RhandX, int handY);
+    void move(float LhandX, float RhandX, float handY);
 };
 
 void Ball::setCircleVertices(){
@@ -41,10 +41,10 @@ void Ball::ball(){
     glEnd();
 }
 
-void Ball::move(int LhandX, int RhandX, int handY){
-    if(handY < y && y < handY + 10){
+void Ball::move(float LhandX, float RhandX, float handY){
+    if(handY < y && y < handY + 5){
         if(LhandX < x && x < LhandX + 45 || RhandX < x && x < RhandX + 45){
-            vy = -vy * restitution;
+            vy = -vy * 1.2;
         }
     }
     if(x < 0 || x > WIDTH){
@@ -66,8 +66,8 @@ void Ball::move(int LhandX, int RhandX, int handY){
 class Player{
     public:
         float positionX = 300.0;
-        float moveSpeed = 5.0;
-        int LhandX = 185, LhandY = 110, RhandX = 415, RhandY = 110;
+        float moveSpeed = 10.0;
+        float LhandX = 185, LhandY = 110, RhandX = 415, RhandY = 110, RarmX = 370, LarmX = 185, FootX = 266,RlegX = 330, LlegX = 270, headX = 300;
         void player();
         void move();
         void updateHandPositions();
@@ -81,7 +81,7 @@ class Player{
         void drawIsoscelesTriangle(float x, float y, float base, float height);
 };
 
-void Player::drawRoundRect(float x, float y, float width, float height, float radius, int angle) {
+void Player::drawRoundRect(float x, float y, float width, float height, float radius, int angle){
     // 半径が高さの半分を超えないように調整
     radius = std::min(radius, height / 2);
     radius = std::min(radius, width / 2);
@@ -309,16 +309,14 @@ void Player::drawIsoscelesTriangle(float x, float y, float base, float height) {
 }
 
 void Player::player(){
-    glPushMatrix();
-    glTranslatef(positionX - 300, 0, 0); 
     // RightArm
     glColor3f(0.0, 0.0, 0.0);
-    drawRoundRect(370, 80, 45, 10, 10, 45);
-    drawRoundRect(320, 60, 45, 10, 10, 0);
+    drawRoundRect(RarmX, 80, 45, 10, 10, 45);
+    drawRoundRect(RarmX - 50, 60, 45, 10, 10, 0);
     // LeftArm
     glColor3f(0.0, 0.0, 0.0);
-    drawRoundRect(185, 80, 45, 10, 10, -45);
-    drawRoundRect(235, 60, 45, 10, 10, 0);
+    drawRoundRect(LarmX, 80, 45, 10, 10, -45);
+    drawRoundRect(LarmX + 50, 60, 45, 10, 10, 0);
     // RightHand
     glColor3f(0.0, 0.0, 0.0);
     drawCrescent(RhandX, RhandY, 15, 10, 100);
@@ -327,23 +325,29 @@ void Player::player(){
     drawCrescent(LhandX, LhandY, 15, 10, 100);
     // Body
     glColor3f(0.0, 0.0, 0.0);
-    drawCircle(300, 57, 20, 50);
+    drawCircle(headX, 57, 20, 50);
     // Head
     glColor3f(0.0, 0.0, 0.0);
-    drawEllipse(300, 100, 30, 18, 50);
-    drawFaceParts(300, 100, 30, 18, 50);
+    drawEllipse(headX, 100, 30, 18, 50);
+    drawFaceParts(headX, 100, 30, 18, 50);
     // Foot
     glColor3f(0.0, 0.0, 0.0);
-    drawIsoscelesTriangle(266, 2, 20, 30);
+    drawIsoscelesTriangle(FootX, 2, 20, 30);
     // Leg
     glColor3f(0.0, 0.0, 0.0);
-    drawCurvedLeg(330, 12, 30, 10, -45, 5, 1);
-    drawCurvedLeg(270, 12, 30, 10, 45, 5);
+    drawCurvedLeg(RlegX, 12, 30, 10, -45, 5, 1); // Right
+    drawCurvedLeg(LlegX, 12, 30, 10, 45, 5); // Left
 }
 
 void Player::updateHandPositions(){
     LhandX = positionX - 115;
     RhandX = positionX + 115;
+    LarmX = positionX - 115;
+    RarmX = positionX + 70;
+    FootX = positionX - 34;
+    RlegX = positionX + 30;
+    LlegX = positionX - 30;
+    headX = positionX;
 }
 
 void Player::move(){

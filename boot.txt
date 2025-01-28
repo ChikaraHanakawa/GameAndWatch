@@ -1,1 +1,0 @@
-g++ -o game ball.cpp -lGL -lGLU -lglut -o test

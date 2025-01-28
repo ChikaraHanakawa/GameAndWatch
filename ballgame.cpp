@@ -12,7 +12,7 @@ class Ball {
     const float gravity = -0.1, restitution = 0.9;
 public:
     std::vector<float> circleVertices;
-    Ball() : x(10.0), y(400.0), vx(3.0), vy(5.0) {}
+    Ball() : x(10.0), y(400.0), vx(2.0), vy(4.0) {}
     void setCircleVertices();
     void ball();
     void move(float LhandX, float RhandX, float handY);
@@ -42,17 +42,13 @@ void Ball::ball(){
 }
 
 void Ball::move(float LhandX, float RhandX, float handY){
-    if(handY < y && y < handY + 5){
-        if(LhandX < x && x < LhandX + 45 || RhandX < x && x < RhandX + 45){
-            vy = -vy * 1.2;
+    if(handY < y && y < handY + 8){
+        if(LhandX - 18 < x && x < LhandX + 18 || RhandX - 18 < x && x < RhandX + 18){
+            vy = -vy * 1.1;
         }
     }
     if(x < 0 || x > WIDTH){
         vx = -vx;
-    }
-    if(y > HEIGHT){
-        y = HEIGHT;
-        vy = -vy;
     }
     if(y < 0){
         y = 0;

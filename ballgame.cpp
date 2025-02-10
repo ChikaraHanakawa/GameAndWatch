@@ -2,6 +2,7 @@
 #include <GL/glut.h>
 #include <vector>
 #include <cmath>
+#include <string>
 
 #define PI 3.14159265358979323846
 #define WIDTH 640
@@ -12,6 +13,7 @@ class Ball {
     const float gravity = -0.1, restitution = 0.9;
 public:
     std::vector<float> circleVertices;
+    int boundcount = 0;
     Ball() : x(10.0), y(400.0), vx(2.0), vy(4.0) {}
     void setCircleVertices();
     void ball();
@@ -44,13 +46,14 @@ void Ball::ball(){
 void Ball::move(float LhandX, float RhandX, float handY){
     if(handY < y && y < handY + 8){
         if(LhandX - 18 < x && x < LhandX + 18 || RhandX - 18 < x && x < RhandX + 18){
-            vy = -vy * 1.1;
+            vy = -vy * 1.005;
         }
     }
     if(x < 0 || x > WIDTH){
         vx = -vx;
     }
     if(y < 0){
+        boundcount++;
         y = 0;
         vy = -vy * restitution;
     }
@@ -82,7 +85,7 @@ void Player::drawRoundRect(float x, float y, float width, float height, float ra
     radius = std::min(radius, height / 2);
     radius = std::min(radius, width / 2);
     
-    int num_segments = 100; // 円弧の分割数
+    int num_segments = 50; // 円弧の分割数
     float theta = 2 * PI / float(num_segments);
     float tangetial_factor = tanf(theta);
     float radial_factor = cosf(theta);
@@ -101,10 +104,8 @@ void Player::drawRoundRect(float x, float y, float width, float height, float ra
     glVertex2f(x + width - radius, y);
     glVertex2f(x + width - radius, y + height);
     glVertex2f(x + radius, y + height);
-    glEnd();
 
     // 四角形の左右の長方形部分を描画
-    glBegin(GL_QUADS);
     glVertex2f(x, y + radius);
     glVertex2f(x + radius, y + radius);
     glVertex2f(x + radius, y + height - radius);
@@ -218,14 +219,14 @@ void Player::drawRect(float x, float y, float width, float height) {
 void Player::drawFaceParts(float x, float y, float radiusX, float radiusY, int num_segments) {
     // RightEye
     glColor3f(1.0, 1.0, 1.0);
-    drawCircle(x + 15, y + 10, 5, 100);
+    drawCircle(x + 15, y + 10, 5, 50);
     glColor3f(0.0, 0.0, 0.0);
-    drawCircle(x + 15, y + 12, 3, 100);
+    drawCircle(x + 15, y + 12, 3, 50);
     // LeftEye
     glColor3f(1.0, 1.0, 1.0);
-    drawCircle(x - 15, y + 10, 5, 100);
+    drawCircle(x - 15, y + 10, 5, 50);
     glColor3f(0.0, 0.0, 0.0);
-    drawCircle(x - 15, y + 12, 3, 100);
+    drawCircle(x - 15, y + 12, 3, 50);
     // Nose
     glColor3f(0.0, 0.0, 0.0);
     drawEllipse(x, y + 20, 10, 20, 100);
@@ -275,12 +276,12 @@ void Player::drawIsoscelesTriangle(float x, float y, float base, float height) {
 
     // 底角を黒丸で塗りつぶす
     glColor3f(0.0, 0.0, 0.0);
-    drawCircle(x - halfBase, y, 10, 100);
-    drawCircle(x + halfBase, y, 7, 100);
+    drawCircle(x - halfBase, y, 10, 50);
+    drawCircle(x + halfBase, y, 7, 50);
 
     // 頂角を白丸で隠す
     glColor3f(1.0, 1.0, 1.0);
-    drawCircle(x, y + height, 12, 100);
+    drawCircle(x, y + height, 12, 50);
     drawRect(x - base, y - halfBase, 50, 10);
 
     x += 70;
@@ -295,12 +296,12 @@ void Player::drawIsoscelesTriangle(float x, float y, float base, float height) {
 
     // 底角を黒丸で塗りつぶす
     glColor3f(0.0, 0.0, 0.0);
-    drawCircle(x - halfBase, y, 7, 100);
-    drawCircle(x + halfBase, y, 10, 100);
+    drawCircle(x - halfBase, y, 7, 50);
+    drawCircle(x + halfBase, y, 10, 50);
 
     // 頂角を白丸で隠す
     glColor3f(1.0, 1.0, 1.0);
-    drawCircle(x, y + height, 12, 100);
+    drawCircle(x, y + height, 12, 50);
     drawRect(x - base, y - halfBase, 50, 10);
 }
 
@@ -315,10 +316,10 @@ void Player::player(){
     drawRoundRect(LarmX + 50, 60, 45, 10, 10, 0);
     // RightHand
     glColor3f(0.0, 0.0, 0.0);
-    drawCrescent(RhandX, RhandY, 15, 10, 100);
+    drawCrescent(RhandX, RhandY, 15, 10, 50);
     // LeftHand
     glColor3f(0.0, 0.0, 0.0);
-    drawCrescent(LhandX, LhandY, 15, 10, 100);
+    drawCrescent(LhandX, LhandY, 15, 10, 50);
     // Body
     glColor3f(0.0, 0.0, 0.0);
     drawCircle(headX, 57, 20, 50);
@@ -352,16 +353,39 @@ void Player::move(){
 
 Ball ball;
 Player player;
+bool isGameOver = false;
 
-void display(){
+void displayGameOver(){
     glClear(GL_COLOR_BUFFER_BIT);
-    player.player();
-    ball.move(player.LhandX, player.RhandX, player.LhandY);
-    ball.ball();
+    glColor3f(0.0, 0.0, 0.0);
+    glRasterPos2f(250, 240);
+    std::string str = "Game Over";
+    for(int i = 0; i < str.size(); i++){
+        glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, str[i]);
+    }
     glutSwapBuffers();
 }
 
+void display(){
+    glClear(GL_COLOR_BUFFER_BIT);
+    if(isGameOver){
+        displayGameOver();
+    } else {
+        player.player();
+        ball.move(player.LhandX, player.RhandX, player.LhandY);
+        ball.ball();
+    }
+    glutSwapBuffers();
+}
+
+void checkGameOver(){
+    if(ball.boundcount > 3){
+        isGameOver = true;
+    }
+}
+
 void timer(int value){
+    checkGameOver();
     glutPostRedisplay();
     glutTimerFunc(16, timer, 0); // 約60FPSで更新
 }

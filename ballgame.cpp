@@ -10,7 +10,7 @@
 
 class Ball {
     float x, y, vx, vy;
-    const float gravity = -0.1, restitution = 0.9;
+    const float gravity = -0.05, restitution = 0.9;
 public:
     std::vector<float> circleVertices;
     int boundcount = 0;
@@ -52,9 +52,11 @@ void Ball::move(float LhandX, float RhandX, float handY){
     if(x < 0 || x > WIDTH){
         vx = -vx;
     }
-    if(y < 0){
-        boundcount++;
-        y = 0;
+    if(y < 0 || y > HEIGHT){
+        if(y < 0){
+            y = 0;
+            boundcount++;
+        }
         vy = -vy * restitution;
     }
     vy += gravity;
@@ -67,6 +69,7 @@ class Player{
         float positionX = 300.0;
         float moveSpeed = 10.0;
         float LhandX = 185, LhandY = 110, RhandX = 415, RhandY = 110, RarmX = 370, LarmX = 185, FootX = 266,RlegX = 330, LlegX = 270, headX = 300;
+        std::vector<float> circleVertices, upperRightVertices, upperLeftVertices, lowerRightVertices, lowerLeftVertices;
         void player();
         void move();
         void updateHandPositions();
@@ -120,40 +123,72 @@ void Player::drawRoundRect(float x, float y, float width, float height, float ra
     // 右上の円弧
     glBegin(GL_TRIANGLE_FAN);
     glVertex2f(x + width - radius, y + height - radius); // 円の中心
-    for (int i = 0; i <= num_segments / 4; i++) {
-        float cx = radius * cosf(theta * i);
-        float cy = radius * sinf(theta * i);
-        glVertex2f(x + width - radius + cx, y + height - radius + cy);
+    if(upperRightVertices.empty()){
+        for (int i = 0; i <= num_segments / 4; i++){
+            float cx = radius * cosf(theta * i);
+            float cy = radius * sinf(theta * i);
+            upperRightVertices.push_back(cx);
+            upperRightVertices.push_back(cy);
+            glVertex2f(x + width - radius + cx, y + height - radius + cy);
+        }
+    }else{
+        for(int i = 0; i < upperRightVertices.size(); i += 2){
+            glVertex2f(x + width - radius + upperRightVertices[i], y + height - radius + upperRightVertices[i + 1]);
+        }
     }
     glEnd();
 
     // 左上の円弧
     glBegin(GL_TRIANGLE_FAN);
     glVertex2f(x + radius, y + height - radius); // 円の中心
-    for (int i = num_segments / 4; i <= num_segments / 2; i++) {
-        float cx = radius * cosf(theta * i);
-        float cy = radius * sinf(theta * i);
-        glVertex2f(x + radius + cx, y + height - radius + cy);
+    if(upperLeftVertices.empty()){
+        for (int i = num_segments / 4; i <= num_segments / 2; i++){
+            float cx = radius * cosf(theta * i);
+            float cy = radius * sinf(theta * i);
+            upperLeftVertices.push_back(cx);
+            upperLeftVertices.push_back(cy);
+            glVertex2f(x + radius + cx, y + height - radius + cy);
+        }
+    }else{
+        for(int i = 0; i < upperLeftVertices.size(); i += 2){
+            glVertex2f(x + radius + upperLeftVertices[i], y + height - radius + upperLeftVertices[i + 1]);
+        }
     }
     glEnd();
 
     // 左下の円弧
     glBegin(GL_TRIANGLE_FAN);
     glVertex2f(x + radius, y + radius); // 円の中心
-    for (int i = num_segments / 2; i <= 3 * num_segments / 4; i++) {
-        float cx = radius * cosf(theta * i);
-        float cy = radius * sinf(theta * i);
-        glVertex2f(x + radius + cx, y + radius + cy);
+    if(lowerLeftVertices.empty()){
+        for (int i = num_segments / 2; i <= 3 * num_segments / 4; i++){
+            float cx = radius * cosf(theta * i);
+            float cy = radius * sinf(theta * i);
+            lowerLeftVertices.push_back(cx);
+            lowerLeftVertices.push_back(cy);
+            glVertex2f(x + radius + cx, y + radius + cy);
+        }
+    }else{
+        for(int i = 0; i < lowerLeftVertices.size(); i += 2){
+            glVertex2f(x + radius + lowerLeftVertices[i], y + radius + lowerLeftVertices[i + 1]);
+        }
     }
     glEnd();
 
     // 右下の円弧
     glBegin(GL_TRIANGLE_FAN);
     glVertex2f(x + width - radius, y + radius); // 円の中心
-    for (int i = 3 * num_segments / 4; i <= num_segments; i++) {
-        float cx = radius * cosf(theta * i);
-        float cy = radius * sinf(theta * i);
-        glVertex2f(x + width - radius + cx, y + radius + cy);
+    if(lowerRightVertices.empty()){
+        for (int i = 3 * num_segments / 4; i <= num_segments; i++){
+            float cx = radius * cosf(theta * i);
+            float cy = radius * sinf(theta * i);
+            lowerRightVertices.push_back(cx);
+            lowerRightVertices.push_back(cy);
+            glVertex2f(x + width - radius + cx, y + radius + cy);
+        }
+    }else{
+        for(int i = 0; i < lowerRightVertices.size(); i += 2){
+            glVertex2f(x + width - radius + lowerRightVertices[i], y + radius + lowerRightVertices[i + 1]);
+        }
     }
     glEnd();
 
@@ -167,9 +202,17 @@ void Player::drawCrescent(float x, float y, float radius, float thickness, int n
     // 手の形にするために黒色で円を描く
     glBegin(GL_TRIANGLE_FAN);
     glVertex2f(x, y);
-    for (int i = 0; i <= num_segments; i++) {
-        float angle = i * angle_step;
-        glVertex2f(x + cos(angle) * radius, y + sin(angle) * radius);
+    if (circleVertices.empty()){
+        for (int i = 0; i <= num_segments; i++){
+            float angle = i * angle_step;
+            circleVertices.push_back(cos(angle));
+            circleVertices.push_back(sin(angle));
+            glVertex2d(x + cos(angle) * radius, y + sin(angle) * radius);
+        }
+    }else{
+        for(int i = 0; i < circleVertices.size(); i += 2){
+            glVertex2f(x + circleVertices[i] * radius, y + circleVertices[i + 1] * radius);
+        }
     }
     glEnd();
 
@@ -178,9 +221,15 @@ void Player::drawCrescent(float x, float y, float radius, float thickness, int n
     glBegin(GL_TRIANGLE_FAN);
     glVertex2f(x, y + thickness); // 円弧の中心
     float large_radius = radius + 0.5f;
-    for (int i = 0; i <= num_segments; i++) {
-        float angle = i * angle_step;
-        glVertex2f(x + cos(angle) * large_radius, y + thickness + sin(angle) * large_radius);
+    if(circleVertices.empty()){
+        for (int i = 0; i <= num_segments; i++){
+            float angle = i * angle_step;
+            glVertex2f(x + cos(angle) * large_radius, y + thickness + sin(angle) * large_radius);
+        }
+    }else{
+        for(int i = 0; i < circleVertices.size(); i += 2){
+            glVertex2f(x + circleVertices[i] * large_radius, y + circleVertices[i + 1] * large_radius + thickness);
+        }
     }
     glEnd();
 }
@@ -189,9 +238,17 @@ void Player::drawCircle(float x, float y, float radius, int num_segments) {
     float angle_step = 2.0f * M_PI / num_segments;
     glBegin(GL_TRIANGLE_FAN);
     glVertex2f(x, y);
-    for (int i = 0; i <= num_segments; i++) {
-        float angle = i * angle_step;
-        glVertex2f(x + cos(angle) * radius, y + sin(angle) * radius);
+    if(circleVertices.empty()){
+        for (int i = 0; i <= num_segments; i++) {
+            float angle = i * angle_step;
+            circleVertices.push_back(cos(angle));
+            circleVertices.push_back(sin(angle));
+            glVertex2f(x + cos(angle) * radius, y + sin(angle) * radius);
+        }
+    }else{
+        for(int i = 0; i < circleVertices.size(); i += 2){
+            glVertex2f(x + circleVertices[i] * radius, y + circleVertices[i + 1] * radius);
+        }
     }
     glEnd();
 }

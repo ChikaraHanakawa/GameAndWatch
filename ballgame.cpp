@@ -3,6 +3,8 @@
 #include <vector>
 #include <cmath>
 #include <string>
+#include <sstream>
+#include <iomanip>
 
 #define PI 3.14159265358979323846
 #define WIDTH 640
@@ -10,7 +12,7 @@
 
 class Ball {
     float x, y, vx, vy;
-    const float gravity = -0.05, restitution = 0.9;
+    const float gravity = -0.009, restitution = 0.9;
 public:
     std::vector<float> circleVertices;
     int boundcount = 0;
@@ -18,6 +20,14 @@ public:
     void setCircleVertices();
     void ball();
     void move(float LhandX, float RhandX, float handY);
+    int getBoundCount() const { return boundcount; }
+    void reset() { 
+        x = 10.0;
+        y = 400.0;
+        vx = 2.0;
+        vy = 4.0;
+        boundcount = 0;
+    }
 };
 
 void Ball::setCircleVertices(){
@@ -57,7 +67,7 @@ void Ball::move(float LhandX, float RhandX, float handY){
             y = 0;
             boundcount++;
         }
-        vy = -vy * restitution;
+        vy = -vy * restitution * 1.1;
     }
     vy += gravity;
     x += vx;
@@ -81,6 +91,10 @@ class Player{
         void drawRect(float x, float y, float width, float height);
         void drawCurvedLeg(float x, float y, float width, float height, float angle, float thickness, bool flip);
         void drawIsoscelesTriangle(float x, float y, float base, float height);
+        void reset() {
+            positionX = 300.0;
+            updateHandPositions();
+        }
 };
 
 void Player::drawRoundRect(float x, float y, float width, float height, float radius, int angle){
@@ -411,15 +425,79 @@ void Player::move(){
 Ball ball;
 Player player;
 bool isGameOver = false;
+int startTime = 0;
+int currentTime = 0;
+
+void resetGame() {
+    ball.reset();
+    player.reset();
+    isGameOver = false;
+    startTime = glutGet(GLUT_ELAPSED_TIME);
+}
+
+void drawText(float x, float y, const std::string& text) {
+    glRasterPos2f(x, y);
+    for (char c : text) {
+        glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, c);
+    }
+}
+
+void displayGameInfo() {
+    glColor3f(0.0, 0.0, 0.0); // 黒色でテキスト表示
+    
+    // 時間表示
+    std::stringstream timeStr;
+    int elapsedSeconds = (currentTime - startTime) / 1000; // ミリ秒から秒へ変換
+    int minutes = elapsedSeconds / 60;
+    int seconds = elapsedSeconds % 60;
+    timeStr << "Time: " << std::setfill('0') << std::setw(2) << minutes << ":" 
+            << std::setfill('0') << std::setw(2) << seconds;
+    drawText(WIDTH - 120, HEIGHT - 30, timeStr.str());
+    
+    // バウンドカウント表示
+    std::stringstream countStr;
+    countStr << "Bounces: " << ball.getBoundCount() << "/3";
+    drawText(WIDTH - 120, HEIGHT - 50, countStr.str());
+}
 
 void displayGameOver(){
     glClear(GL_COLOR_BUFFER_BIT);
     glColor3f(0.0, 0.0, 0.0);
+    
+    // ゲームオーバーテキスト
     glRasterPos2f(250, 240);
     std::string str = "Game Over";
     for(int i = 0; i < str.size(); i++){
         glutBitmapCharacter(GLUT_BITMAP_TIMES_ROMAN_24, str[i]);
     }
+    
+    // プレイ時間表示
+    std::stringstream timeStr;
+    int elapsedSeconds = (currentTime - startTime) / 1000;
+    int minutes = elapsedSeconds / 60;
+    int seconds = elapsedSeconds % 60;
+    timeStr << "Time: " << std::setfill('0') << std::setw(2) << minutes << ":" 
+            << std::setfill('0') << std::setw(2) << seconds;
+    glRasterPos2f(250, 210);
+    std::string timeString = timeStr.str();
+    for(int i = 0; i < timeString.size(); i++){
+        glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, timeString[i]);
+    }
+    
+    // リスタート指示の表示
+    glRasterPos2f(215, 180);
+    std::string restartStr = "Press 'R' to restart";
+    for(int i = 0; i < restartStr.size(); i++){
+        glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, restartStr[i]);
+    }
+    
+    // 終了指示の表示
+    glRasterPos2f(215, 150);
+    std::string quitStr = "Press 'Q' to quit";
+    for(int i = 0; i < quitStr.size(); i++){
+        glutBitmapCharacter(GLUT_BITMAP_HELVETICA_18, quitStr[i]);
+    }
+    
     glutSwapBuffers();
 }
 
@@ -431,36 +509,56 @@ void display(){
         player.player();
         ball.move(player.LhandX, player.RhandX, player.LhandY);
         ball.ball();
+        displayGameInfo();
     }
     glutSwapBuffers();
 }
 
 void checkGameOver(){
-    if(ball.boundcount > 3){
+    if(ball.getBoundCount() > 3){
         isGameOver = true;
     }
 }
 
 void timer(int value){
+    currentTime = glutGet(GLUT_ELAPSED_TIME);
     checkGameOver();
     glutPostRedisplay();
     glutTimerFunc(16, timer, 0); // 約60FPSで更新
 }
 
 void specialKeyInput(int key, int x, int y) {
-    switch(key) {
-        case GLUT_KEY_LEFT:
-            if(player.positionX > 50) { // 左端の制限
-                player.positionX -= player.moveSpeed;
-            }
-            break;
-        case GLUT_KEY_RIGHT:
-            if(player.positionX < WIDTH - 50) { // 右端の制限
-                player.positionX += player.moveSpeed;
-            }
-            break;
+    if (!isGameOver) {  // ゲームオーバー時は矢印キー操作を無効化
+        switch(key) {
+            case GLUT_KEY_LEFT:
+                if(player.positionX > 50) { // 左端の制限
+                    player.positionX -= player.moveSpeed;
+                }
+                break;
+            case GLUT_KEY_RIGHT:
+                if(player.positionX < WIDTH - 50) { // 右端の制限
+                    player.positionX += player.moveSpeed;
+                }
+                break;
+        }
+        player.move(); // 位置の更新を反映
+        glutPostRedisplay();
     }
-    player.move(); // 位置の更新を反映
+}
+
+void keyboardInput(unsigned char key, int x, int y) {
+    if (isGameOver) {
+        switch(key) {
+            case 'q':
+            case 'Q':
+                exit(0);  // プログラムを終了
+                break;
+            case 'r':
+            case 'R':
+                resetGame();  // ゲームをリセット
+                break;
+        }
+    }
     glutPostRedisplay();
 }
 
@@ -479,12 +577,15 @@ int main(int argc, char** argv){
     glutCreateWindow("Ball Game");
 
     initOpenGL();
-
     ball.setCircleVertices();
+    
+    // ゲーム開始時間を記録
+    startTime = glutGet(GLUT_ELAPSED_TIME);
 
     glutDisplayFunc(display);
     glutTimerFunc(0, timer, 0);
-    glutSpecialFunc(specialKeyInput); 
+    glutSpecialFunc(specialKeyInput);
+    glutKeyboardFunc(keyboardInput);  // 通常のキーボード入力関数を追加
     glutMainLoop();
     return 0;
 }
